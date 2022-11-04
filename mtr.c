@@ -119,13 +119,13 @@ int main(void){
 
     switch (result){
     case ACEITO:
-        printf("Aceito\n");
+        printf("Aceito");
         break;
     case REJEITOU:
-        printf("Rejeitou\n");
+        printf("Rejeitou");
         break;
     case ERRO:
-        printf("Erro\n");
+        printf("Erro");
         break;
     case EXECUTANDO:
         printf("Executando");
