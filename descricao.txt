@@ -1,3 +1,13 @@
+
+(estado_inicial, lido) = (escrita, estado_intermediario1)
+(estado_intermediario1, 0) = (D, estado_final)
+(estado_intermediario2, 0) = (E, estado_final)
+(estado_intermediario3, 0) = (P, estado_final)
+
+input = $XX1
+historico = 1,2,2,4,4,5,2,2,4,4,4,5,5,(sigma, 5),(sigma, 6)
+output = $XX4X
+
 Primeiramente, na MT reversível teremos 3 fitas: input, history e output.
 Para construir a MT reversível a partir das transições de um MT ordinária, definida através de quintuplas:
 A T -> T' sigma A'
