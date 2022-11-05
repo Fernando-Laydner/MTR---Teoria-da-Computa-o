@@ -85,14 +85,14 @@ int transcao_mf_compara(const void* a, const void* b){
 // Imprime as fitas quintuplas
 void transicao5_imprime(transicao_t *transicao){
     #if(DEBUG == 1)
-    printf("Transicao: (%d,%c)=(%d,%c,%c)\n", transicao->estado_input, transicao->input, transicao->estado_output, transicao->output, transicao->op);
+    printf("\tTransicao: (%d,%c)=(%d,%c,%c)\n", transicao->estado_input, transicao->input, transicao->estado_output, transicao->output, transicao->op);
     #endif
 }
 
 // Imprime as fitas quadruplas
 void transicao4_imprime(transicao_q *transicao){
     #if(DEBUG == 1)
-    printf("Transicao: (%d,%c)=(%d,%c)\n", transicao->estado_input, transicao->input, transicao->estado_output, transicao->op);
+    printf("\tTransicao: (%d,%c)=(%d,%c)\n", transicao->estado_input, transicao->input, transicao->estado_output, transicao->op);
     #endif
 }
 
@@ -104,7 +104,7 @@ int main(void){
     int n_estado, n_simb, n_trans, n_simb_input;
 
     scanf("%d %d %d %d", &n_estado, &n_simb_input, &n_simb, &n_trans);
-    printf("Numero de estados: %d\nTamanho do alfabeto da fita: %d\nQuantidade de estados: %d\nNumero de transicoes: %d\n", n_estado, n_simb_input, n_simb, n_trans);
+    printf("Numero de estados: %d\nTamanho do alfabeto da fita: %d\nTamanho do alfabeto da MT: %d\nNumero de transicoes: %d\n", n_estado, n_simb_input, n_simb, n_trans);
     
     // Define os estados da MT
     int *estados = malloc(sizeof(int)*n_estado);
@@ -138,7 +138,7 @@ int main(void){
 
     // Carrega todas transições do arquivo
     transicao_t *trasicoes = malloc(sizeof(transicao_t)*n_trans);
-
+    printf("Transicoes:\n");
     for(int i = 0; i < n_trans; i++){
         scanf(" (%d,%c)=(%d,%c,%c)\n", &trasicoes[i].estado_input, &trasicoes[i].input, &trasicoes[i].estado_output, &trasicoes[i].output, &trasicoes[i].op);
         transicao5_imprime(trasicoes+i);
@@ -164,7 +164,7 @@ int main(void){
     for(int i = 0; i < 10000; i++){
         // Lê o char da fita na posição atual
         char simb_atual = mt.fita[mt.pos];
-        printf("Estado da Fita: %s\n", mt.fita);
+        printf("Estado da Fita: \033[0;31m%s\033[0m\n", mt.fita);
 
         // Coloca Branco caso seja um char nulo
         if('\0' == simb_atual){simb_atual = simb[n_simb-1];}
@@ -237,7 +237,7 @@ int main(void){
     for(int i = 0; i < 10000; i++){
         // Lê o char da fita na posição atual
         char simb_atual = mt.fita[mt.pos];
-        printf("Estado da Fita: %s\n", mt.fita);
+        printf("Estado da Fita: \033[0;31m%s\033[0m\n", mt.fita);
 
         // Impede que seja lido além do ultimo char da fita
         if('\0' == simb_atual){simb_atual = simb[n_simb-1];}
@@ -363,20 +363,20 @@ int main(void){
     }    
     #endif
 
-    // Escreve a situação da MT
-    printf("\nEstado final da fita: %s\nSituacao da MT: ", mt.fita);
+    // Escreve a situação da MTprintf("Estado da Fita: s\n", mt.fita);
+    printf("\nEstado final da fita: \033[0;32m%s\033[0m\nSituacao da MT: ", mt.fita);
     switch (result){
         case ACEITO:
-            printf("Aceitou");
+            printf("\033[0;32mAceitou\033[0m");
             break;
         case REJEITOU:
-            printf("Rejeitou");
+            printf("\033[0;33mRejeitou\033[0m");
             break;
         case ERRO:
-            printf("Erro");
+            printf("\033[0;31mErro\033[0m");
             break;
         case EXECUTANDO:
-            printf("Executando");
+            printf("\033[0;34mExecutando\033[0m");
             break;
         default:
             assert(!"Resultado inesperado");
