@@ -164,7 +164,7 @@ int main(void){
     for(int i = 0; i < 10000; i++){
         // Lê o char da fita na posição atual
         char simb_atual = mt.fita[mt.pos];
-        printf("Estado da Fita: \033[0;31m%s\033[0m\n", mt.fita);
+        printf("Estado da Fita: \033[0;36m%s\033[0m\n", mt.fita);
 
         // Coloca Branco caso seja um char nulo
         if('\0' == simb_atual){simb_atual = simb[n_simb-1];}
@@ -237,7 +237,7 @@ int main(void){
     for(int i = 0; i < 10000; i++){
         // Lê o char da fita na posição atual
         char simb_atual = mt.fita[mt.pos];
-        printf("Estado da Fita: \033[0;31m%s\033[0m\n", mt.fita);
+        printf("Estado da Fita: \033[0;36m%s\033[0m\n", mt.fita);
 
         // Impede que seja lido além do ultimo char da fita
         if('\0' == simb_atual){simb_atual = simb[n_simb-1];}
@@ -363,7 +363,7 @@ int main(void){
     }    
     #endif
 
-    // Escreve a situação da MTprintf("Estado da Fita: s\n", mt.fita);
+    // Escreve a situação da MT
     printf("\nEstado final da fita: \033[0;32m%s\033[0m\nSituacao da MT: ", mt.fita);
     switch (result){
         case ACEITO:
