@@ -166,7 +166,7 @@ int main(void){
         char simb_atual = mt.fita[mt.pos];
         printf("Estado da Fita: %s\n", mt.fita);
 
-        // Impede que seja lido além do ultimo char da fita, talvez não seja necessário...
+        // Coloca Branco caso seja um char nulo
         if('\0' == simb_atual){simb_atual = simb[n_simb-1];}
 
         // Define a chave e realiza a busca na lista de transições
