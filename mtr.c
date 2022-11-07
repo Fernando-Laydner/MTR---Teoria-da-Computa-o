@@ -1,13 +1,11 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <assert.h>
 
 
 // Opção de debug
 #define DEBUG 1
-
-// Define todas situações da MT
-enum resultado{EXECUTANDO, ACEITO, ERRO, REJEITOU};
 
 // Define qual fita será executada ('5' -> quintupla, '4' -> quadrupla, '69' -> reversível).
 #define FITA 5
@@ -42,6 +40,9 @@ typedef struct transicao_mf{
     char op[3];
 }transicao_mf;
 
+// Define todas situações da MT
+enum resultado{EXECUTANDO, ACEITO, ERRO, REJEITOU};
+
 // Busca o estado correto das fitas quintuplas
 int transicao5_compara(const void* a, const void* b){
     transicao_t *_a = a;
@@ -74,8 +75,7 @@ int transcao_mf_compara(const void* a, const void* b){
     transicao_mf *_b = b;
 
     if(_a->estado_input == _b->estado_input){
-        // return strncmp(_a->input, _b->input, 3);
-        return 0;
+        return strncmp(_a->input, _b->input, sizeof(char)*3);
     }
     else{
         return _a->estado_input - _b->estado_input;
@@ -186,6 +186,11 @@ int main(void){
             transicao5_imprime(transicao_atual);
         }
 
+        // Escreve na fita de acordo com a transição atual e se for diferente de 'B'
+        if (transicao_atual->output != 'B'){
+            mt.fita[mt.pos] = transicao_atual->output;
+        }
+
         // Movimenta o leitor da fita 
         switch (transicao_atual->op){
         case 'R':
@@ -198,9 +203,6 @@ int main(void){
             break;
         default: assert(!"Movimento impossivel"); break;
         }
-
-        // Escreve na fita de acordo com a transição atual
-        mt.fita[mt.pos] = transicao_atual->output;
 
         // Define o novo estado
         mt.estado_atual = transicao_atual->estado_output;
@@ -239,15 +241,17 @@ int main(void){
         char simb_atual = mt.fita[mt.pos];
         printf("Estado da Fita: \033[0;36m%s\033[0m\n", mt.fita);
 
-        // Impede que seja lido além do ultimo char da fita
+        // Coloca Branco caso seja um char nulo
         if('\0' == simb_atual){simb_atual = simb[n_simb-1];}
 
         // Define a chave e realiza a busca na lista de transições
         transicao_q chave;
         if (i%2 == 0){
+            // Leitura
             chave = (transicao_q){mt.estado_atual, simb_atual, 0 , 0};
         }
         else{
+            // Escrita
             chave = (transicao_q){mt.estado_atual, '/', 0 , 0};
         }
         transicao_q *transicao_atual = bsearch(&chave, trasicoes_q, n_trans*2, sizeof(transicao_q), transicao4_compara);
@@ -379,7 +383,7 @@ int main(void){
             printf("\033[0;34mExecutando\033[0m");
             break;
         default:
-            assert(!"Resultado inesperado");
+            assert(!"\033[0;35Resultado inesperado\033[0m");
             break;
     }
 }
