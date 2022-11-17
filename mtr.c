@@ -8,7 +8,7 @@
 #define DEBUG 1
 
 // Define qual working_tape será executada ('5' -> quintupla, '4' -> quadrupla, '69' -> reversível).
-#define FITA 69
+#define FITA 5
 
 // Cria a struc da working_tape quintupla
 typedef struct transicao_t{
@@ -41,7 +41,7 @@ typedef struct mt_r{
 }mt_r;
 
 // Define todas situações da MT
-enum resultado{EXECUTANDO, ACEITO, ERRO, REJEITOU};
+enum resultado{EXECUTANDO, ACEITO, ERRO, REJEITOU, VOLTOU};
 
 // Busca o estado correto das fitas quintuplas
 int transicao5_compara(const void* a, const void* b){
@@ -147,7 +147,7 @@ int main(void){
     mt_t mt = {.estado_atual=1};
     scanf(" %4999s", mt.working_tape);
     printf("Fita na entrada: %s\n\n", mt.working_tape);
-    printf("Inicio das operacoes:\n");
+    printf("\nInicio das operacoes:\n");
 
     // Organiza a working_tape para poder realizar o bsearch
     qsort(trasicoes, n_trans, sizeof(transicao_t), transicao5_compara);
@@ -214,7 +214,6 @@ int main(void){
     mt_t mt = {.estado_atual=1};
     scanf(" %4999s", mt.working_tape);
     printf("Fita na entrada: %s\n\n", mt.working_tape);
-    printf("Inicio das operacoes:\n");
 
     // Indica o ultimo estado para adicionar os estados novos e aloca as a quantidade de transições
     int indica_utimo = n_estado+1;
@@ -229,11 +228,11 @@ int main(void){
         transicao4_imprime(trasicoes_q+i*2+1);
         indica_utimo++;
     }
-    printf("\n\nInicio das operacoes:\n");
+    printf("\nInicio das operacoes:\n");
 
     // Organiza a working_tape para poder realizar o bsearch
     qsort(trasicoes_q, n_trans*2, sizeof(transicao_q), transicao4_compara);
-
+    printf("\nTransicoes organizadas:\n");
     for(int i = 0; i < n_trans*2; i++){
         transicao4_imprime(trasicoes_q+i);
     }
@@ -301,7 +300,6 @@ int main(void){
     mt_r mt = {.estado_atual=1};
     scanf(" %4999s", mt.working_tape);
     printf("Fita na entrada: %s\n\n", mt.working_tape);
-    printf("Inicio das operacoes:\n");
 
 // Indica o ultimo estado para adicionar os estados novos e aloca as a quantidade de transições
     int indica_utimo = n_estado+1;
@@ -316,14 +314,15 @@ int main(void){
         transicao4_imprime(trasicoes_q+i*2+1);
         indica_utimo++;
     }
-    printf("\n\nInicio das operacoes:\n");
 
     // Organiza as transicoes para poder realizar o bsearch
     qsort(trasicoes_q, n_trans*2, sizeof(transicao_q), transicao4_compara);
-
+    printf("\nTransicoes organizadas:\n");
     for(int i = 0; i < n_trans*2; i++){
         transicao4_imprime(trasicoes_q+i);
     }
+
+    printf("\nInicio das operacoes:\n");
     
     // Realiza as operações.
     for(int i = 0; i < 10000; i++){
@@ -383,14 +382,14 @@ int main(void){
         }
     }
     memcpy(mt.output_tape, mt.working_tape, 5000);
-    printf("Historico: ");
+    printf("\nHistorico: ");
     for (int i = 0; i < mt.hist; i++){
         printf("%d ", mt.history[i]);
     }
     putchar('\n');
 // Volta
     
-    printf("Voltando: \n");
+    printf("\nVoltando: \n");
     transicao_q *trasicoes_r = malloc(sizeof(transicao_q)*n_trans*2);
     memcpy(trasicoes_r, trasicoes_q, sizeof(transicao_q)*n_trans*2);
     // Organiza as transiçoes pra volta e para poder realizar o bsearch
@@ -403,7 +402,7 @@ int main(void){
             estado_atual = mt.history[--mt.hist];
         }
         else{
-            result = ACEITO;
+            result = VOLTOU;
             break;
         }
         printf("Estado da Fita: \033[0;36m%s\033[0m\n", mt.working_tape);
@@ -447,7 +446,10 @@ int main(void){
         transicao4_imprime(transicao_volta);
 
         // Pega o valor que deve ter sido lido e escreve na fita.
-        mt.working_tape[mt.pos] = transicao_volta->input;
+        if (transicao_volta->input != 'B')
+            mt.working_tape[mt.pos] = transicao_volta->input;
+        else
+            mt.working_tape[mt.pos] = '\0';
     }
     #endif
 
@@ -465,6 +467,9 @@ int main(void){
             break;
         case EXECUTANDO:
             printf("\033[0;34mExecutando\033[0m");
+            break;
+        case VOLTOU:
+            printf("\033[0;32mVoltou\033[0m");
             break;
         default:
             assert(!"\033[0;35Resultado inesperado\033[0m");
