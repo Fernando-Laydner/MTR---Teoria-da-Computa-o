@@ -8,7 +8,7 @@
 #define DEBUG 1
 
 // Define qual working_tape será executada ('5' -> quintupla, '4' -> quadrupla, '69' -> reversível).
-#define FITA 5
+#define FITA 69
 
 // Cria a struc da working_tape quintupla
 typedef struct transicao_t{
@@ -43,7 +43,7 @@ typedef struct mt_r{
 // Define todas situações da MT
 enum resultado{EXECUTANDO, ACEITO, ERRO, REJEITOU, VOLTOU};
 
-// Busca o estado correto das fitas quintuplas
+// Busca a transição correta nas transição quintuplas
 int transicao5_compara(const void* a, const void* b){
     transicao_t *_a = a;
     transicao_t *_b = b;
@@ -56,7 +56,7 @@ int transicao5_compara(const void* a, const void* b){
     }
 }
 
-// Busca o estado correto das fitas quadruplas
+// Busca a transição correta nas transição quadruplas
 int transicao4_compara(const void* a, const void* b){
     transicao_q *_a = a;
     transicao_q *_b = b;
@@ -66,7 +66,7 @@ int transicao4_compara(const void* a, const void* b){
     return 0;
 }
 
-// Necessário pra volta
+// Busca a transição correta nas transiçoes reversíveis
 int transicaoR_compara(const void* a, const void* b){
     transicao_q *_a = a;
     transicao_q *_b = b;
@@ -89,12 +89,9 @@ void transicao4_imprime(transicao_q *transicao){
 }
 
 int main(void){
-
 // Leitura da MT
-
     // Primeira linha com número de estados, tamanho do alfabeto da working_tape, quantidade de estados, número de transições.
     int n_estado, n_simb, n_trans, n_simb_input;
-
     scanf("%d %d %d %d", &n_estado, &n_simb_input, &n_simb, &n_trans);
     printf("Numero de estados: %d\nTamanho do alfabeto da working_tape: %d\nTamanho do alfabeto da MT: %d\nNumero de transicoes: %d\n", n_estado, n_simb_input, n_simb, n_trans);
     
@@ -147,14 +144,20 @@ int main(void){
     mt_t mt = {.estado_atual=1};
     scanf(" %4999s", mt.working_tape);
     printf("Fita na entrada: %s\n\n", mt.working_tape);
-    printf("\nInicio das operacoes:\n");
 
-    // Organiza a working_tape para poder realizar o bsearch
+    // Organiza as transições para poder realizar o bsearch
     qsort(trasicoes, n_trans, sizeof(transicao_t), transicao5_compara);
+    #if(DEBUG == 1)
+        printf("\nTransicoes quintuplas organizadas:\n");
+        for (int i = 0; i < n_trans; i++){
+            transicao5_imprime(trasicoes+i);
+        }
+    #endif
     
     // Realiza as operações.
+    printf("\nInicio das operacoes:\n");
     for(int i = 0; i < 10000; i++){
-        // Lê o char da working_tape na posição atual
+        // Lê o char da fita na posição atual
         char simb_atual = mt.working_tape[mt.pos];
         printf("Estado da Fita: \033[0;36m%s\033[0m\n", mt.working_tape);
 
@@ -183,7 +186,7 @@ int main(void){
             mt.working_tape[mt.pos] = transicao_atual->output;
         }
 
-        // Movimenta o leitor da working_tape 
+        // Movimenta o leitor da MT 
         switch (transicao_atual->op){
         case 'R':
             if(4999 == mt.pos){result = ERRO; exit(EXIT_FAILURE);}
@@ -199,8 +202,7 @@ int main(void){
         // Define o novo estado
         mt.estado_atual = transicao_atual->estado_output;
 
-        // Termina o programa se o estado de aceitação (definido como numero de estados da MT original, que é o 6)
-        // Talvez definir o estado de aceitação antes seja uma boa ideia, caso não seja o ultimo.
+        // Termina o programa se for o estado de aceitação (definido como numero de estados da MT original, que é o 6)
         if(mt.estado_atual == n_estado){
             result = ACEITO;
             break;
@@ -219,25 +221,29 @@ int main(void){
     int indica_utimo = n_estado+1;
     transicao_q *trasicoes_q = malloc(sizeof(transicao_q)*n_trans*2);
 
-    printf("Novas transicoes:\n");
-    // Converte as transições quintupla em quadruplas 
-    for(int i = 0; i < n_trans; i++){
-        trasicoes_q[i*2] = (transicao_q){trasicoes[i].estado_input, trasicoes[i].input, indica_utimo, trasicoes[i].output};
-        trasicoes_q[i*2+1] = (transicao_q){indica_utimo, '/', trasicoes[i].estado_output , trasicoes[i].op};
-        transicao4_imprime(trasicoes_q+i*2);
-        transicao4_imprime(trasicoes_q+i*2+1);
-        indica_utimo++;
-    }
-    printf("\nInicio das operacoes:\n");
+    // Converte as transições quintupla em quadruplas
+    #if(DEBUG == 1)
+        printf("Novas transicoes:\n");
+    #endif
+        for(int i = 0; i < n_trans; i++){
+            trasicoes_q[i*2] = (transicao_q){trasicoes[i].estado_input, trasicoes[i].input, indica_utimo, trasicoes[i].output};
+            trasicoes_q[i*2+1] = (transicao_q){indica_utimo, '/', trasicoes[i].estado_output , trasicoes[i].op};
+            transicao4_imprime(trasicoes_q+i*2);
+            transicao4_imprime(trasicoes_q+i*2+1);
+            indica_utimo++;
+        }
 
-    // Organiza a working_tape para poder realizar o bsearch
+    // Organiza as transições para poder realizar o bsearch
     qsort(trasicoes_q, n_trans*2, sizeof(transicao_q), transicao4_compara);
-    printf("\nTransicoes organizadas:\n");
-    for(int i = 0; i < n_trans*2; i++){
-        transicao4_imprime(trasicoes_q+i);
-    }
+    #if(DEBUG == 1)
+        printf("\nTransicoes quadruplas organizadas:\n");
+        for(int i = 0; i < n_trans*2; i++){
+            transicao4_imprime(trasicoes_q+i);
+        }
+    #endif
     
     // Realiza as operações.
+    printf("\nInicio das operacoes:\n");
     for(int i = 0; i < 10000; i++){
         // Lê o char da working_tape na posição atual
         char simb_atual = mt.working_tape[mt.pos];
@@ -277,7 +283,7 @@ int main(void){
                     break;
                 default: assert(!"Movimento impossivel"); break;
             }
-        // Escreve na working_tape de acordo com a transição atual e se for diferente de 'B'
+        // Escreve na working_tape de acordo com a transição atual
         else{
             mt.working_tape[mt.pos] = transicao_atual->op;
         }
@@ -285,13 +291,11 @@ int main(void){
         // Define o novo estado
         mt.estado_atual = transicao_atual->estado_output;
 
-        // Termina o programa se o estado de aceitação (definido como numero de estados da MT original, que é o 6)
-        // Talvez definir o estado de aceitação antes seja uma boa ideia, caso não seja o ultimo.
+        // Termina o programa se for o estado de aceitação (definido como numero de estados da MT original, que é o 6)
         if(mt.estado_atual == n_estado){
             result = ACEITO;
             break;
         }
-
     }
 // Fitas Reversíveis WIP
     #elif(FITA == 69)
@@ -301,12 +305,14 @@ int main(void){
     scanf(" %4999s", mt.working_tape);
     printf("Fita na entrada: %s\n\n", mt.working_tape);
 
-// Indica o ultimo estado para adicionar os estados novos e aloca as a quantidade de transições
+    // Indica o ultimo estado para adicionar os estados novos e aloca as a quantidade de transições
     int indica_utimo = n_estado+1;
     transicao_q *trasicoes_q = malloc(sizeof(transicao_q)*n_trans*2);
 
-    printf("Novas transicoes:\n");
-    // Converte as transições quintupla em quadruplas 
+    // Converte as transições quintupla em quadruplas
+    #if(DEBUG == 1) 
+        printf("Novas transicoes:\n");
+    #endif
     for(int i = 0; i < n_trans; i++){
         trasicoes_q[i*2] = (transicao_q){trasicoes[i].estado_input, trasicoes[i].input, indica_utimo, trasicoes[i].output};
         trasicoes_q[i*2+1] = (transicao_q){indica_utimo, '/', trasicoes[i].estado_output , trasicoes[i].op};
@@ -317,14 +323,15 @@ int main(void){
 
     // Organiza as transicoes para poder realizar o bsearch
     qsort(trasicoes_q, n_trans*2, sizeof(transicao_q), transicao4_compara);
-    printf("\nTransicoes organizadas:\n");
-    for(int i = 0; i < n_trans*2; i++){
-        transicao4_imprime(trasicoes_q+i);
-    }
-
-    printf("\nInicio das operacoes:\n");
+    #if(DEBUG == 1)
+        printf("\nTransicoes quadruplas organizadas:\n");
+        for(int i = 0; i < n_trans*2; i++){
+            transicao4_imprime(trasicoes_q+i);
+        }
+    #endif
     
     // Realiza as operações.
+    printf("\nInicio das operacoes:\n");
     for(int i = 0; i < 10000; i++){
         // Lê o char da fita na posição atual
         char simb_atual = mt.working_tape[mt.pos];
@@ -351,7 +358,7 @@ int main(void){
             transicao4_imprime(transicao_atual);
         }
 
-        // Movimenta o leitor da working_tape
+        // Movimenta o leitor da MT
         if (transicao_atual->input == '/'){
             switch (transicao_atual->op){
                 case 'R':
@@ -366,7 +373,7 @@ int main(void){
             }
             mt.history[mt.hist++] = transicao_atual->estado_input;
         }
-        // Escreve na working_tape de acordo com a transição atual e se for diferente de 'B'
+        // Escreve na working_tape de acordo com a transição atual
         else{
             mt.working_tape[mt.pos] = transicao_atual->op;
         }
@@ -374,29 +381,41 @@ int main(void){
         // Define o novo estado
         mt.estado_atual = transicao_atual->estado_output;
 
-        // Termina o programa se o estado de aceitação (definido como numero de estados da MT original, que é o 6)
-        // Talvez definir o estado de aceitação antes seja uma boa ideia, caso não seja o ultimo.
+        // Termina o programa se for o estado de aceitação (definido como numero de estados da MT original, que é o 6)
         if(mt.estado_atual == n_estado){
             result = ACEITO;
             break;
         }
     }
+
+    // Copia a fita da working_tape pra output_tape
     memcpy(mt.output_tape, mt.working_tape, 5000);
-    printf("\nHistorico: ");
+
+    // Escreve o histórico
+    printf("\nHistorico: \033[1;35m[");
     for (int i = 0; i < mt.hist; i++){
-        printf("%d ", mt.history[i]);
+        printf("%d", mt.history[i]);
+        if (i < mt.hist-1){printf(", ");}
     }
-    putchar('\n');
+    printf("]\033[0m\n");
 // Volta
-    
-    printf("\nVoltando: \n");
+    // Cria as transições reversíveis
     transicao_q *trasicoes_r = malloc(sizeof(transicao_q)*n_trans*2);
     memcpy(trasicoes_r, trasicoes_q, sizeof(transicao_q)*n_trans*2);
+
     // Organiza as transiçoes pra volta e para poder realizar o bsearch
     qsort(trasicoes_r, n_trans*2, sizeof(transicao_q), transicaoR_compara);
+    #if(DEBUG == 1)
+        printf("\nTransicoes reversiveis organizadas:\n");
+        for(int i = 0; i < n_trans*2; i++){
+            transicao4_imprime(trasicoes_r+i);
+        }
+    #endif
 
+    // Realiza as operações de volta
+    printf("\nInicio de volta:\n");
     for(int i = 0; i < 10000; i++){
-        // Lê o char da working_tape na posição atual
+        // Lê os estados do histórico de trás pra frente
         char estado_atual;
         if (mt.hist > 0){
             estado_atual = mt.history[--mt.hist];
@@ -405,6 +424,8 @@ int main(void){
             result = VOLTOU;
             break;
         }
+
+        // Imprime o estado da fita na volta  
         printf("Estado da Fita: \033[0;36m%s\033[0m\n", mt.working_tape);
 
         // Define a chave e realiza a busca na lista de transições
@@ -425,7 +446,7 @@ int main(void){
             transicao4_imprime(transicao_atual);
         }
 
-        // Movimenta o leitor da working_tape
+        // Movimenta o leitor da MT
         switch (transicao_atual->op){
             case 'R':
                 if(4999 == mt.pos){result = ERRO; exit(EXIT_FAILURE);}
@@ -437,15 +458,17 @@ int main(void){
                 break;
             default: assert(!"Movimento impossivel"); break;
         }
+
+        // Apaga o histórico
         mt.history[mt.hist] = 0;
 
-        // Define a chave e realiza a busca na lista de transições
+        // Define a chave reversível e realiza a busca na lista de transições reversíveis
         transicao_q chaveR;
         chaveR = (transicao_q){0, 0, estado_atual , 0};
         transicao_q *transicao_volta = bsearch(&chaveR, trasicoes_r, n_trans*2, sizeof(transicao_q), transicaoR_compara);
         transicao4_imprime(transicao_volta);
 
-        // Pega o valor que deve ter sido lido e escreve na fita.
+        // Pega o valor que deve ter sido lido e escreve na fita (se for pra escrever B ele apaga).
         if (transicao_volta->input != 'B')
             mt.working_tape[mt.pos] = transicao_volta->input;
         else
