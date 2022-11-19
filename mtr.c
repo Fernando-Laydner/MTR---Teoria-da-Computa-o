@@ -45,8 +45,8 @@ enum resultado{EXECUTANDO, ACEITO, ERRO, REJEITOU, VOLTOU};
 
 // Busca a transição correta nas transição quintuplas
 int transicao5_compara(const void* a, const void* b){
-    transicao_t *_a = a;
-    transicao_t *_b = b;
+    transicao_t const *_a = a;
+    transicao_t const *_b = b;
 
     if(_a->estado_input == _b->estado_input){
         return _a->input - _b->input;
@@ -58,8 +58,8 @@ int transicao5_compara(const void* a, const void* b){
 
 // Busca a transição correta nas transição quadruplas
 int transicao4_compara(const void* a, const void* b){
-    transicao_q *_a = a;
-    transicao_q *_b = b;
+    transicao_q const *_a = a;
+    transicao_q const *_b = b;
 
     if(_a->estado_input != _b->estado_input){return _a->estado_input - _b->estado_input;} 
     else if(_a->input != '/' && _b->input != '/' && _b->input != _a->input){return _a->input - _b->input;}
@@ -68,8 +68,8 @@ int transicao4_compara(const void* a, const void* b){
 
 // Busca a transição correta nas transiçoes reversíveis
 int transicaoR_compara(const void* a, const void* b){
-    transicao_q *_a = a;
-    transicao_q *_b = b;
+    transicao_q const *_a = a;
+    transicao_q const *_b = b;
 
     return _a->estado_output - _b->estado_output;
 }
