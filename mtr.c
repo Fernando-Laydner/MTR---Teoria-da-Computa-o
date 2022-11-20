@@ -271,7 +271,7 @@ int main(int argc, char *argv[]){
                 mt.pos ++; 
                 break;
             case 'L': 
-                if (0 == mt.pos){result = ERRO; printf("Nao pode antes do inicio da fita!\n"); exit(EXIT_FAILURE);}
+                if (0 == mt.pos){result = ERRO; printf("Nao pode voltar antes do inicio da fita!\n"); exit(EXIT_FAILURE);}
                 mt.pos --; 
                 break;
             default: assert(!"Movimento impossivel"); break;
@@ -366,7 +366,7 @@ int main(int argc, char *argv[]){
                         mt.pos ++; 
                         break;
                     case 'L': 
-                        if (0 == mt.pos){result = ERRO; printf("Nao pode antes do inicio da fita!\n"); exit(EXIT_FAILURE);}
+                        if (0 == mt.pos){result = ERRO; printf("Nao pode voltar antes do inicio da fita!\n"); exit(EXIT_FAILURE);}
                         mt.pos --; 
                         break;
                     default: assert(!"Movimento impossivel"); break;
@@ -466,7 +466,7 @@ int main(int argc, char *argv[]){
                         mt.pos ++; 
                         break;
                     case 'L': 
-                        if (0 == mt.pos){result = ERRO; printf("Nao pode antes do inicio da fita!\n"); exit(EXIT_FAILURE);}
+                        if (0 == mt.pos){result = ERRO; printf("Nao pode voltar antes do inicio da fita!\n"); exit(EXIT_FAILURE);}
                         mt.pos --; 
                         break;
                     default: assert(!"Movimento impossivel"); break;
@@ -553,7 +553,7 @@ int main(int argc, char *argv[]){
                     mt.pos --; 
                     break;
                 case 'L': 
-                    if (-1 == mt.pos){result = ERRO; printf("Nao pode antes do inicio da fita!\n"); exit(EXIT_FAILURE);}
+                    if (-1 == mt.pos){result = ERRO; printf("Nao pode voltar antes do inicio da fita!\n"); exit(EXIT_FAILURE);}
                     mt.pos ++; 
                     break;
                 default: assert(!"Movimento impossivel"); break;
