@@ -1,4 +1,4 @@
-CFLAGS=-Wpedantic -Wall -Wextra
+CFLAGS=-Wpedantic -Wall -Wextra -Wstrict-aliasing -fstrict-aliasing
 SOURCE=mtr.c
 TARGET=mtr
 

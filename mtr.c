@@ -71,17 +71,34 @@ int transicaoR_compara(const void* a, const void* b){
     return _a->estado_output - _b->estado_output;
 }
 
+int string_compara(const void *a, const void *b)
+{
+    return strcmp(*(char const **)a, *(char const **)b);
+}
+
+char **estados = NULL;
+char estados_buffer[5000] = {0};
+int n_estado = -1;
+
 // Imprime as fitas quintuplas
 void transicao5_imprime(transicao_t *transicao){
     #if(DEBUG == 1)
-    printf("\tTransicao: (%d,%c)=(%d,%c,%c)\n", transicao->estado_input, transicao->input, transicao->estado_output, transicao->output, transicao->op);
+    printf("\tTransicao: (");
+    if (transicao->estado_input < n_estado) printf("%s", estados[transicao->estado_input]); else printf("%d", transicao->estado_input);
+    printf(",%c)=(", transicao->input);
+    if (transicao->estado_output < n_estado) printf("%s", estados[transicao->estado_output]); else printf("%d", transicao->estado_output);
+    printf(",%c,%c)\n", transicao->output, transicao->op);
     #endif
 }
 
 // Imprime as fitas quadruplas
 void transicao4_imprime(transicao_q *transicao){
     #if(DEBUG == 1)
-    printf("\tTransicao: (%d,%c)=(%d,%c)\n", transicao->estado_input, transicao->input, transicao->estado_output, transicao->op);
+    printf("\tTransicao: (");
+    if (transicao->estado_input < n_estado) printf("%s", estados[transicao->estado_input]); else printf("%d", transicao->estado_input);
+    printf(",%c)=(", transicao->input);
+    if (transicao->estado_output < n_estado) printf("%s", estados[transicao->estado_output]); else printf("%d", transicao->estado_output);
+    printf(",%c)\n", transicao->op);
     #endif
 }
 
@@ -90,13 +107,12 @@ void escreve_situacao_mt(enum resultado result, char *tape);
 int main(int argc, char *argv[]){
 // Leitura da MT
     // Primeira linha com número de estados, tamanho do alfabeto da working_tape, quantidade de estados, número de transições.
-    int n_estado, n_simb, n_trans, n_simb_input;
+    int n_simb, n_trans, n_simb_input;
     scanf("%d %d %d %d ", &n_estado, &n_simb_input, &n_simb, &n_trans);
     printf("Numero de estados: %d\nTamanho do alfabeto da working_tape: %d\nTamanho do alfabeto da MT: %d\nNumero de transicoes: %d\n", n_estado, n_simb_input, n_simb, n_trans);
     
     // Define os estados da MT
-    char **estados = malloc(sizeof(char *)*n_estado);
-    char estados_buffer[5000] = {0};
+    estados = malloc(sizeof(char *)*n_estado);
     fgets(estados_buffer, 5000, stdin);
     printf("Estados na entrada: [");
     estados[0] = strtok(estados_buffer, " ");
@@ -107,6 +123,7 @@ int main(int argc, char *argv[]){
         printf(", %s", estados[i]);
     }
     printf("]\n");
+    qsort(estados, n_estado, sizeof (char *), string_compara);
 
     // Define o alfabeto da Fita
     char *simb_input = malloc(n_simb_input);
@@ -132,7 +149,27 @@ int main(int argc, char *argv[]){
     transicao_t *trasicoes = malloc(sizeof(transicao_t)*n_trans);
     printf("Transicoes:\n");
     for(int i = 0; i < n_trans; i++){
-        scanf(" (%d,%c)=(%d,%c,%c)\n", &trasicoes[i].estado_input, &trasicoes[i].input, &trasicoes[i].estado_output, &trasicoes[i].output, &trasicoes[i].op);
+        char estado_input[100] = {0};
+        char estado_output[100] = {0};
+        scanf(" (%99[^,],%c)=(%99[^,],%c,%c)\n", estado_input, &trasicoes[i].input, estado_output, &trasicoes[i].output, &trasicoes[i].op);
+
+        char **estado_input_encontrado = bsearch(&(char *){estado_input}, estados, n_estado, sizeof (char *), string_compara);
+        if (NULL == estado_input_encontrado) {
+            fprintf(stderr, "Estado %s invalido na transicao", estado_input); 
+            exit(EXIT_FAILURE);
+        }
+
+        char **estado_output_encontrado = bsearch(&(char *){estado_output}, estados, n_estado, sizeof (char *), string_compara);
+        if (NULL == estado_output_encontrado) {
+            fprintf(stderr, "Estado %s invalido na transicao", estado_output); 
+            exit(EXIT_FAILURE);
+        }
+        trasicoes[i].estado_input  = estado_input_encontrado  - estados;
+        trasicoes[i].estado_output = estado_output_encontrado - estados;
+
+	assert(trasicoes[i].estado_input  < n_estado);
+	assert(trasicoes[i].estado_output < n_estado);
+
         transicao5_imprime(trasicoes+i);
     }
 // Leitura da MT
@@ -145,7 +182,7 @@ int main(int argc, char *argv[]){
     {
 
     // Lê a Fita
-    mt_t mt = {.estado_atual=1};
+    mt_t mt = {.estado_atual=0};
     scanf(" %4999s", mt.working_tape);
     printf("Fita na entrada: %s\n\n", mt.working_tape);
 
@@ -193,11 +230,11 @@ int main(int argc, char *argv[]){
         // Movimenta o leitor da MT 
         switch (transicao_atual->op){
         case 'R':
-            if(4999 == mt.pos){result = ERRO; exit(EXIT_FAILURE);}
+            if(4999 == mt.pos){result = ERRO; printf("Acabou a fita!\n"); exit(EXIT_FAILURE);}
             mt.pos ++; 
             break;
         case 'L': 
-            if (0 == mt.pos){result = ERRO; exit(EXIT_FAILURE);}
+            if (0 == mt.pos){result = ERRO; printf("Nao pode antes do inicio da fita!\n"); exit(EXIT_FAILURE);}
             mt.pos --; 
             break;
         default: assert(!"Movimento impossivel"); break;
@@ -207,7 +244,7 @@ int main(int argc, char *argv[]){
         mt.estado_atual = transicao_atual->estado_output;
 
         // Termina o programa se for o estado de aceitação (definido como numero de estados da MT original, que é o 6)
-        if(mt.estado_atual == n_estado){
+        if(mt.estado_atual == n_estado - 1){
             result = ACEITO;
             break;
         }
@@ -221,12 +258,12 @@ int main(int argc, char *argv[]){
 // Fitas Quadruplas
     
     // Lê a Fita
-    mt_t mt = {.estado_atual=1};
+    mt_t mt = {.estado_atual=0};
     scanf(" %4999s", mt.working_tape);
     printf("Fita na entrada: %s\n\n", mt.working_tape);
 
     // Indica o ultimo estado para adicionar os estados novos e aloca as a quantidade de transições
-    int indica_utimo = n_estado+1;
+    int indica_utimo = n_estado;
     transicao_q *trasicoes_q = malloc(sizeof(transicao_q)*n_trans*2);
 
     // Converte as transições quintupla em quadruplas
@@ -282,11 +319,11 @@ int main(int argc, char *argv[]){
         if (transicao_atual->input == '/')
             switch (transicao_atual->op){
                 case 'R':
-                    if(4999 == mt.pos){result = ERRO; exit(EXIT_FAILURE);}
+                    if(4999 == mt.pos){result = ERRO; printf("Acabou a fita!\n"); exit(EXIT_FAILURE);}
                     mt.pos ++; 
                     break;
                 case 'L': 
-                    if (0 == mt.pos){result = ERRO; exit(EXIT_FAILURE);}
+                    if (0 == mt.pos){result = ERRO; printf("Nao pode antes do inicio da fita!\n"); exit(EXIT_FAILURE);}
                     mt.pos --; 
                     break;
                 default: assert(!"Movimento impossivel"); break;
@@ -300,7 +337,7 @@ int main(int argc, char *argv[]){
         mt.estado_atual = transicao_atual->estado_output;
 
         // Termina o programa se for o estado de aceitação (definido como numero de estados da MT original, que é o 6)
-        if(mt.estado_atual == n_estado){
+        if(mt.estado_atual == n_estado - 1){
             result = ACEITO;
             break;
         }
@@ -314,12 +351,12 @@ int main(int argc, char *argv[]){
 // Fitas Reversíveis WIP
 
     // Lê a Fita
-    mt_r mt = {.estado_atual=1};
+    mt_r mt = {.estado_atual=0};
     scanf(" %4999s", mt.working_tape);
     printf("Fita na entrada: %s\n\n", mt.working_tape);
 
     // Indica o ultimo estado para adicionar os estados novos e aloca as a quantidade de transições
-    int indica_utimo = n_estado+1;
+    int indica_utimo = n_estado;
     transicao_q *trasicoes_q = malloc(sizeof(transicao_q)*n_trans*2);
 
     // Converte as transições quintupla em quadruplas
@@ -375,11 +412,11 @@ int main(int argc, char *argv[]){
         if (transicao_atual->input == '/'){
             switch (transicao_atual->op){
                 case 'R':
-                    if(4999 == mt.pos){result = ERRO; exit(EXIT_FAILURE);}
+                    if(4999 == mt.pos){result = ERRO; printf("Acabou a fita!\n"); exit(EXIT_FAILURE);}
                     mt.pos ++; 
                     break;
                 case 'L': 
-                    if (0 == mt.pos){result = ERRO; exit(EXIT_FAILURE);}
+                    if (0 == mt.pos){result = ERRO; printf("Nao pode antes do inicio da fita!\n"); exit(EXIT_FAILURE);}
                     mt.pos --; 
                     break;
                 default: assert(!"Movimento impossivel"); break;
@@ -395,7 +432,7 @@ int main(int argc, char *argv[]){
         mt.estado_atual = transicao_atual->estado_output;
 
         // Termina o programa se for o estado de aceitação (definido como numero de estados da MT original, que é o 6)
-        if(mt.estado_atual == n_estado){
+        if(mt.estado_atual == n_estado - 1){
             result = ACEITO;
             break;
         }
@@ -462,11 +499,11 @@ int main(int argc, char *argv[]){
         // Movimenta o leitor da MT
         switch (transicao_atual->op){
             case 'R':
-                if(4999 == mt.pos){result = ERRO; exit(EXIT_FAILURE);}
+                if(4999 == mt.pos){result = ERRO; printf("Acabou a fita!\n"); exit(EXIT_FAILURE);}
                 mt.pos --; 
                 break;
             case 'L': 
-                if (-1 == mt.pos){result = ERRO; exit(EXIT_FAILURE);}
+                if (-1 == mt.pos){result = ERRO; printf("Nao pode antes do inicio da fita!\n"); exit(EXIT_FAILURE);}
                 mt.pos ++; 
                 break;
             default: assert(!"Movimento impossivel"); break;
