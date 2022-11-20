@@ -88,7 +88,9 @@ void transicao4_imprime(transicao_q *transicao){
     #endif
 }
 
-int main(void){
+void escreve_situacao_mt(enum resultado result, char *tape);
+
+int main(int argc, char *argv[]){
 // Leitura da MT
     // Primeira linha com número de estados, tamanho do alfabeto da working_tape, quantidade de estados, número de transições.
     int n_estado, n_simb, n_trans, n_simb_input;
@@ -138,7 +140,8 @@ int main(void){
     enum resultado result = EXECUTANDO;
 
 // Fitas Quintuplas
-    #if(FITA == 5)
+    if (2 == argc && '5' == argv[1][0])
+    {
 
     // Lê a Fita
     mt_t mt = {.estado_atual=1};
@@ -209,8 +212,12 @@ int main(void){
         }
     }
 
+    escreve_situacao_mt(result, mt.working_tape);
+
+    }
+    else if (2 == argc && '4' == argv[1][0])
+    {
 // Fitas Quadruplas
-    #elif(FITA == 4)
     
     // Lê a Fita
     mt_t mt = {.estado_atual=1};
@@ -297,8 +304,13 @@ int main(void){
             break;
         }
     }
+
+    escreve_situacao_mt(result, mt.working_tape);
+
+    }
+    else if (1 == argc || (2 == argc && 'R' == argv[1][0]))
+    {
 // Fitas Reversíveis WIP
-    #elif(FITA == 69)
 
     // Lê a Fita
     mt_r mt = {.estado_atual=1};
@@ -474,10 +486,23 @@ int main(void){
         else
             mt.working_tape[mt.pos] = '\0';
     }
-    #endif
 
-    // Escreve a situação da MT
-    printf("\nEstado final da working_tape: \033[0;32m%s\033[0m\nSituacao da MT: ", mt.working_tape);
+    escreve_situacao_mt(result, mt.working_tape);
+
+    }
+    else if (2 == argc)
+    {
+        fprintf(stderr, "Unrecognized option %s, try one of 4, 5 or R.\n", argv[1]);
+    }
+    else
+    {
+        fprintf(stderr, "Too much options passed.\n");
+    }
+}
+
+void escreve_situacao_mt(enum resultado result, char *tape)
+{
+    printf("\nEstado final da working_tape: \033[0;32m%s\033[0m\nSituacao da MT: ", tape);
     switch (result){
         case ACEITO:
             printf("\033[0;32mAceitou\033[0m");
@@ -499,4 +524,3 @@ int main(void){
             break;
     }
 }
-
