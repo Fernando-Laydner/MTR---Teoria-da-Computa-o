@@ -7,9 +7,6 @@
 // Opção de debug
 #define DEBUG 1
 
-// Define qual working_tape será executada ('5' -> quintupla, '4' -> quadrupla, '69' -> reversível).
-#define FITA 69
-
 // Cria a struc da working_tape quintupla
 typedef struct transicao_t{
     int estado_input;
@@ -94,16 +91,20 @@ int main(int argc, char *argv[]){
 // Leitura da MT
     // Primeira linha com número de estados, tamanho do alfabeto da working_tape, quantidade de estados, número de transições.
     int n_estado, n_simb, n_trans, n_simb_input;
-    scanf("%d %d %d %d", &n_estado, &n_simb_input, &n_simb, &n_trans);
+    scanf("%d %d %d %d ", &n_estado, &n_simb_input, &n_simb, &n_trans);
     printf("Numero de estados: %d\nTamanho do alfabeto da working_tape: %d\nTamanho do alfabeto da MT: %d\nNumero de transicoes: %d\n", n_estado, n_simb_input, n_simb, n_trans);
     
     // Define os estados da MT
-    int *estados = malloc(sizeof(int)*n_estado);
+    char **estados = malloc(sizeof(char *)*n_estado);
+    char estados_buffer[5000] = {0};
+    fgets(estados_buffer, 5000, stdin);
     printf("Estados na entrada: [");
-    for(int i = 0; i < n_estado; i++){
-        scanf("%d", estados+i);
-        printf("%d", estados[i]);
-        if (i < n_estado-1){printf(", ");}
+    estados[0] = strtok(estados_buffer, " ");
+    printf("%s", estados[0]);
+    for (int i = 1; i < n_estado; i++){
+        estados[i] = strtok(NULL, " ");
+        if (i == n_estado - 1) estados[n_estado - 1][strlen(estados[n_estado - 1]) - 1] = '\0';
+        printf(", %s", estados[i]);
     }
     printf("]\n");
 
