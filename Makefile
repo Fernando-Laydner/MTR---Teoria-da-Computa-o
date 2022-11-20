@@ -11,4 +11,4 @@ clean:
 	rm -f $(TARGET)
 
 run:
-	./$(TARGET) < entrada-quintupla.txt
+	./$(TARGET) < exemplo-1.txt
