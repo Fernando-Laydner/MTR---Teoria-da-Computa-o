@@ -105,9 +105,9 @@ int n_estado = -1;
 void transicao5_imprime(transicao_t *transicao){
     #if(DEBUG == 1)
     printf("\tTransicao: (");
-    if (transicao->estado_input < n_estado) printf("%s", estados[transicao->estado_input]); else printf("%d", transicao->estado_input);
+    if (transicao->estado_input < n_estado) printf("%s", estados[transicao->estado_input]); else printf("%d'", transicao->estado_input);
     printf(",%c)=(", transicao->input);
-    if (transicao->estado_output < n_estado) printf("%s", estados[transicao->estado_output]); else printf("%d", transicao->estado_output);
+    if (transicao->estado_output < n_estado) printf("%s", estados[transicao->estado_output]); else printf("%d'", transicao->estado_output);
     printf(",%c,%c)\n", transicao->output, transicao->op);
     #endif
 }
@@ -116,20 +116,20 @@ void transicao5_imprime(transicao_t *transicao){
 void transicao4_imprime(transicao_q *transicao){
     #if(DEBUG == 1)
     printf("\tTransicao: (");
-    if (transicao->estado_input < n_estado) printf("%s", estados[transicao->estado_input]); else printf("%d", transicao->estado_input);
+    if (transicao->estado_input < n_estado) printf("%s", estados[transicao->estado_input]); else printf("%d'", transicao->estado_input);
     printf(",%c)=(", transicao->input);
-    if (transicao->estado_output < n_estado) printf("%s", estados[transicao->estado_output]); else printf("%d", transicao->estado_output);
+    if (transicao->estado_output < n_estado) printf("%s", estados[transicao->estado_output]); else printf("%d'", transicao->estado_output);
     printf(",%c)\n", transicao->op);
     #endif
 }
 
 
 // Verifica a fita por char inválidos
-void verifica_fita(char fita[], char alfabeto[], int tamanho_alfabeto){
+void verifica_fita(char fita[], char alfabeto[], int tamanho_alfabeto, char branco){
     for (int i = 0; i < 5000; i++){
         if (fita[i] == '\0') break;
         for (int j = 0; j < tamanho_alfabeto; j++){
-            if (fita[i] == alfabeto[j]) break;
+            if (fita[i] == alfabeto[j] || fita[i] == branco) break;
             else if(j == tamanho_alfabeto - 1){
                 printf("Fita contem caracteres invalidos");
                 exit(1);
@@ -150,15 +150,26 @@ int main(int argc, char *argv[]){
     estados = malloc(sizeof(char *)*n_estado);
     fgets(estados_buffer, 5000, stdin);
     printf("Estados na entrada: [");
-    estados[0] = strtok(estados_buffer, " ");
+    char *estado_primeiro = estados[0] = strtok(estados_buffer, " ");
+    char *estado_ultimo = NULL;
     printf("%s", estados[0]);
     for (int i = 1; i < n_estado; i++){
         estados[i] = strtok(NULL, " ");
-        if (i == n_estado - 1) estados[n_estado - 1][strlen(estados[n_estado - 1]) - 1] = '\0';
+        if (i == n_estado - 1)
+	{
+            estados[n_estado - 1][strlen(estados[n_estado - 1]) - 1] = '\0';
+            estado_ultimo = estados[i];
+        }
         printf(", %s", estados[i]);
     }
     printf("]\n");
     qsort(estados, n_estado, sizeof (char *), string_compara);
+    int estado_ultimo_id = (char **)bsearch(&estado_ultimo, estados, n_estado,
+		    sizeof (char *), string_compara) - estados;
+    int estado_primeiro_id = (char **)bsearch(&estado_primeiro, estados, n_estado,
+		    sizeof (char *), string_compara) - estados;
+    assert(estado_ultimo_id >= 0 && estado_ultimo_id < n_estado);
+    assert(estado_primeiro_id >= 0 && estado_ultimo_id < n_estado);
 
     // Define o alfabeto da Fita
     char *simb_input = malloc(n_simb_input);
@@ -190,20 +201,21 @@ int main(int argc, char *argv[]){
 
         char **estado_input_encontrado = bsearch(&(char *){estado_input}, estados, n_estado, sizeof (char *), string_compara);
         if (NULL == estado_input_encontrado) {
-            fprintf(stderr, "Estado %s invalido na transicao", estado_input); 
+            fprintf(stderr, "Estado original %s invalido na transicao", estado_input); 
             exit(EXIT_FAILURE);
         }
 
         char **estado_output_encontrado = bsearch(&(char *){estado_output}, estados, n_estado, sizeof (char *), string_compara);
         if (NULL == estado_output_encontrado) {
-            fprintf(stderr, "Estado %s invalido na transicao", estado_output); 
+            fprintf(stderr, "Estado seguinte %s invalido na transicao"
+			    " (estado original %s)\n", estado_output, estado_input); 
             exit(EXIT_FAILURE);
         }
         trasicoes[i].estado_input  = estado_input_encontrado  - estados;
         trasicoes[i].estado_output = estado_output_encontrado - estados;
 
-	    assert(trasicoes[i].estado_input  < n_estado);
-	    assert(trasicoes[i].estado_output < n_estado);
+        assert(trasicoes[i].estado_input  < n_estado);
+        assert(trasicoes[i].estado_output < n_estado);
 
         transicao5_imprime(trasicoes+i);
     }
@@ -216,12 +228,12 @@ int main(int argc, char *argv[]){
     if (2 == argc && '5' == argv[1][0]){
 
         // Lê a Fita
-        mt_t mt = {.estado_atual=0};
+        mt_t mt = {.estado_atual=estado_primeiro_id};
         scanf(" %4999s", mt.working_tape);
         printf("Fita na entrada: %s\n\n", mt.working_tape);
 
         // Verifica se exite algum char que não faz parte do alfabeto da fita
-        verifica_fita(mt.working_tape, simb_input, n_simb_input);
+        verifica_fita(mt.working_tape, simb_input, n_simb_input, simb[n_simb - 1]);
 
         // Organiza as transições para poder realizar o bsearch
         qsort(trasicoes, n_trans, sizeof(transicao_t), transicao5_compara);
@@ -260,7 +272,12 @@ int main(int argc, char *argv[]){
             }
 
             // Escreve na working_tape de acordo com a transição atual e se for diferente de 'B'
-            if (transicao_atual->output != 'B'){
+	    if (transicao_atual->output == simb[n_simb-1]
+                    && mt.working_tape[mt.pos + 1] == '\0')
+	    {
+                mt.working_tape[mt.pos] = '\0';
+	    }
+            else {
                 mt.working_tape[mt.pos] = transicao_atual->output;
             }
 
@@ -281,7 +298,7 @@ int main(int argc, char *argv[]){
             mt.estado_atual = transicao_atual->estado_output;
 
             // Termina o programa se for o estado de aceitação (definido como numero de estados da MT original, que é o 6)
-            if(mt.estado_atual == n_estado - 1){
+            if(mt.estado_atual == estado_ultimo_id){
                 result = ACEITO;
                 break;
             }
@@ -298,12 +315,12 @@ int main(int argc, char *argv[]){
     else if (2 == argc && '4' == argv[1][0]){
         
         // Lê a Fita
-        mt_t mt = {.estado_atual=0};
+        mt_t mt = {.estado_atual=estado_primeiro_id};
         scanf(" %4999s", mt.working_tape);
         printf("Fita na entrada: %s\n\n", mt.working_tape);
 
         // Verifica se exite algum char que não faz parte do alfabeto da fita
-        verifica_fita(mt.working_tape, simb_input, n_simb_input);
+        verifica_fita(mt.working_tape, simb_input, n_simb_input, simb[n_simb - 1]);
 
         // Indica o ultimo estado para adicionar os estados novos e aloca as a quantidade de transições
         int indica_utimo = n_estado;
@@ -373,14 +390,21 @@ int main(int argc, char *argv[]){
                 }
             // Escreve na working_tape de acordo com a transição atual
             else{
-                mt.working_tape[mt.pos] = transicao_atual->op;
+                if (transicao_atual->op == simb[n_simb-1]
+                        && mt.working_tape[mt.pos + 1] == '\0')
+                {
+                    mt.working_tape[mt.pos] = '\0';
+                }
+                else {
+                    mt.working_tape[mt.pos] = transicao_atual->op;
+                }
             }
 
             // Define o novo estado
             mt.estado_atual = transicao_atual->estado_output;
 
             // Termina o programa se for o estado de aceitação (definido como numero de estados da MT original, que é o 6)
-            if(mt.estado_atual == n_estado - 1){
+            if(mt.estado_atual == estado_ultimo_id){
                 result = ACEITO;
                 break;
             }
@@ -398,12 +422,12 @@ int main(int argc, char *argv[]){
     else if (1 == argc || (2 == argc && 'R' == argv[1][0])){
 
         // Lê a Fita
-        mt_r mt = {.estado_atual=0};
+        mt_r mt = {.estado_atual=estado_primeiro_id};
         scanf(" %4999s", mt.working_tape);
         printf("Fita na entrada: %s\n\n", mt.working_tape);
 
         // Verifica se exite algum char que não faz parte do alfabeto da fita
-        verifica_fita(mt.working_tape, simb_input, n_simb_input);
+        verifica_fita(mt.working_tape, simb_input, n_simb_input, simb[n_simb - 1]);
 
         // Indica o ultimo estado para adicionar os estados novos e aloca as a quantidade de transições
         int indica_utimo = n_estado;
@@ -475,14 +499,21 @@ int main(int argc, char *argv[]){
             }
             // Escreve na working_tape de acordo com a transição atual
             else{
-                mt.working_tape[mt.pos] = transicao_atual->op;
+                if (transicao_atual->op == simb[n_simb-1]
+                        && mt.working_tape[mt.pos + 1] == '\0')
+                {
+                    mt.working_tape[mt.pos] = '\0';
+                }
+                else {
+                    mt.working_tape[mt.pos] = transicao_atual->op;
+                }
             }
 
             // Define o novo estado
             mt.estado_atual = transicao_atual->estado_output;
 
             // Termina o programa se for o estado de aceitação (definido como numero de estados da MT original, que é o 6)
-            if(mt.estado_atual == n_estado - 1){
+            if(mt.estado_atual == estado_ultimo_id){
                 result = ACEITO;
                 break;
             }
@@ -569,10 +600,16 @@ int main(int argc, char *argv[]){
             transicao4_imprime(transicao_volta);
 
             // Pega o valor que deve ter sido lido e escreve na fita (se for pra escrever B ele apaga).
-            if (transicao_volta->input != 'B')
-                mt.working_tape[mt.pos] = transicao_volta->input;
-            else
+
+	    if (transicao_volta->input == simb[n_simb-1]
+			    && mt.working_tape[mt.pos + 1] == '\0')
+	    {
                 mt.working_tape[mt.pos] = '\0';
+	    }
+	    else
+	    {
+                mt.working_tape[mt.pos] = transicao_volta->input;
+	    }
         }
 
     // Escreve a situação final da fita e libera a memória. 
