@@ -3,9 +3,14 @@
 #include <stdlib.h>
 #include <assert.h>
 
-
 // Opção de debug
 #define DEBUG 1
+
+// Variavéis de estado
+char **estados = NULL;
+char estados_buffer[5000] = {0};
+int n_estado = -1;
+
 
 // Cria a struc da working_tape quintupla
 typedef struct transicao_t{
@@ -40,6 +45,7 @@ typedef struct mt_r{
 // Define todas situações da MT
 enum resultado{EXECUTANDO, ACEITO, ERRO, REJEITOU, VOLTOU};
 
+
 // Busca a transição correta nas transição quintuplas
 int transicao5_compara(const void* a, const void* b){
     transicao_t const *_a = a;
@@ -67,12 +73,13 @@ int transicaoR_compara(const void* a, const void* b){
     return _a->estado_output - _b->estado_output;
 }
 
+// Compara duas strings
 int string_compara(const void *a, const void *b){
     return strcmp(*(char const **)a, *(char const **)b);
 }
 
-void escreve_situacao_mt(enum resultado result, char *tape)
-{
+// Imprime a situação da MT
+void escreve_situacao_mt(enum resultado result, char *tape){
     printf("\nEstado final da working_tape: \033[0;32m%s\033[0m\nSituacao da MT: ", tape);
     switch (result){
         case ACEITO:
@@ -96,11 +103,6 @@ void escreve_situacao_mt(enum resultado result, char *tape)
     }
 }
 
-
-char **estados = NULL;
-char estados_buffer[5000] = {0};
-int n_estado = -1;
-
 // Imprime as fitas quintuplas
 void transicao5_imprime(transicao_t *transicao){
     #if(DEBUG == 1)
@@ -122,7 +124,6 @@ void transicao4_imprime(transicao_q *transicao){
     printf(",%c)\n", transicao->op);
     #endif
 }
-
 
 // Verifica a fita por char inválidos
 void verifica_fita(char fita[], char alfabeto[], int tamanho_alfabeto, char branco){
@@ -155,8 +156,7 @@ int main(int argc, char *argv[]){
     printf("%s", estados[0]);
     for (int i = 1; i < n_estado; i++){
         estados[i] = strtok(NULL, " ");
-        if (i == n_estado - 1)
-	{
+        if (i == n_estado - 1){
             estados[n_estado - 1][strlen(estados[n_estado - 1]) - 1] = '\0';
             estado_ultimo = estados[i];
         }
@@ -164,10 +164,8 @@ int main(int argc, char *argv[]){
     }
     printf("]\n");
     qsort(estados, n_estado, sizeof (char *), string_compara);
-    int estado_ultimo_id = (char **)bsearch(&estado_ultimo, estados, n_estado,
-		    sizeof (char *), string_compara) - estados;
-    int estado_primeiro_id = (char **)bsearch(&estado_primeiro, estados, n_estado,
-		    sizeof (char *), string_compara) - estados;
+    int estado_ultimo_id = (char **)bsearch(&estado_ultimo, estados, n_estado, sizeof (char *), string_compara) - estados;
+    int estado_primeiro_id = (char **)bsearch(&estado_primeiro, estados, n_estado, sizeof (char *), string_compara) - estados;
     assert(estado_ultimo_id >= 0 && estado_ultimo_id < n_estado);
     assert(estado_primeiro_id >= 0 && estado_ultimo_id < n_estado);
 
@@ -207,8 +205,7 @@ int main(int argc, char *argv[]){
 
         char **estado_output_encontrado = bsearch(&(char *){estado_output}, estados, n_estado, sizeof (char *), string_compara);
         if (NULL == estado_output_encontrado) {
-            fprintf(stderr, "Estado seguinte %s invalido na transicao"
-			    " (estado original %s)\n", estado_output, estado_input); 
+            fprintf(stderr, "Estado seguinte %s invalido na transicao (estado original %s)\n", estado_output, estado_input); 
             exit(EXIT_FAILURE);
         }
         trasicoes[i].estado_input  = estado_input_encontrado  - estados;
@@ -239,9 +236,7 @@ int main(int argc, char *argv[]){
         qsort(trasicoes, n_trans, sizeof(transicao_t), transicao5_compara);
         #if(DEBUG == 1)
             printf("\nTransicoes quintuplas organizadas:\n");
-            for (int i = 0; i < n_trans; i++){
-                transicao5_imprime(trasicoes+i);
-            }
+            for (int i = 0; i < n_trans; i++) transicao5_imprime(trasicoes+i);
         #endif
         
         // Realiza as operações.
@@ -272,14 +267,8 @@ int main(int argc, char *argv[]){
             }
 
             // Escreve na working_tape de acordo com a transição atual e se for diferente de 'B'
-	    if (transicao_atual->output == simb[n_simb-1]
-                    && mt.working_tape[mt.pos + 1] == '\0')
-	    {
-                mt.working_tape[mt.pos] = '\0';
-	    }
-            else {
-                mt.working_tape[mt.pos] = transicao_atual->output;
-            }
+            if (transicao_atual->output == simb[n_simb-1] && mt.working_tape[mt.pos + 1] == '\0') mt.working_tape[mt.pos] = '\0';
+            else mt.working_tape[mt.pos] = transicao_atual->output;
 
             // Movimenta o leitor da MT 
             switch (transicao_atual->op){
@@ -304,12 +293,12 @@ int main(int argc, char *argv[]){
             }
         }
 
-    // Escreve a situação final da fita e libera a memória.  
-    escreve_situacao_mt(result, mt.working_tape);
-    free(trasicoes);
-    free(simb);
-    free(simb_input);
-    free(estados);
+        // Escreve a situação final da fita e libera a memória.  
+        escreve_situacao_mt(result, mt.working_tape);
+        free(trasicoes);
+        free(simb);
+        free(simb_input);
+        free(estados);
     }
 // Fitas Quadruplas
     else if (2 == argc && '4' == argv[1][0]){
@@ -342,9 +331,7 @@ int main(int argc, char *argv[]){
         qsort(trasicoes_q, n_trans*2, sizeof(transicao_q), transicao4_compara);
         #if(DEBUG == 1)
             printf("\nTransicoes quadruplas organizadas:\n");
-            for(int i = 0; i < n_trans*2; i++){
-                transicao4_imprime(trasicoes_q+i);
-            }
+            for(int i = 0; i < n_trans*2; i++) transicao4_imprime(trasicoes_q+i);
         #endif
         
         // Realiza as operações.
@@ -390,14 +377,8 @@ int main(int argc, char *argv[]){
                 }
             // Escreve na working_tape de acordo com a transição atual
             else{
-                if (transicao_atual->op == simb[n_simb-1]
-                        && mt.working_tape[mt.pos + 1] == '\0')
-                {
-                    mt.working_tape[mt.pos] = '\0';
-                }
-                else {
-                    mt.working_tape[mt.pos] = transicao_atual->op;
-                }
+                if (transicao_atual->op == simb[n_simb-1] && mt.working_tape[mt.pos + 1] == '\0') mt.working_tape[mt.pos] = '\0';
+                else mt.working_tape[mt.pos] = transicao_atual->op;
             }
 
             // Define o novo estado
@@ -410,13 +391,13 @@ int main(int argc, char *argv[]){
             }
         }
 
-    // Escreve a situação final da fita e libera a memória. 
-    escreve_situacao_mt(result, mt.working_tape);
-    free(trasicoes_q);
-    free(trasicoes);
-    free(simb);
-    free(simb_input);
-    free(estados);
+        // Escreve a situação final da fita e libera a memória. 
+        escreve_situacao_mt(result, mt.working_tape);
+        free(trasicoes_q);
+        free(trasicoes);
+        free(simb);
+        free(simb_input);
+        free(estados);
     }
 // Fitas Reversíveis
     else if (1 == argc || (2 == argc && 'R' == argv[1][0])){
@@ -449,9 +430,7 @@ int main(int argc, char *argv[]){
         qsort(trasicoes_q, n_trans*2, sizeof(transicao_q), transicao4_compara);
         #if(DEBUG == 1)
             printf("\nTransicoes quadruplas organizadas:\n");
-            for(int i = 0; i < n_trans*2; i++){
-                transicao4_imprime(trasicoes_q+i);
-            }
+            for(int i = 0; i < n_trans*2; i++) transicao4_imprime(trasicoes_q+i);
         #endif
         
         // Realiza as operações.
@@ -499,14 +478,8 @@ int main(int argc, char *argv[]){
             }
             // Escreve na working_tape de acordo com a transição atual
             else{
-                if (transicao_atual->op == simb[n_simb-1]
-                        && mt.working_tape[mt.pos + 1] == '\0')
-                {
-                    mt.working_tape[mt.pos] = '\0';
-                }
-                else {
-                    mt.working_tape[mt.pos] = transicao_atual->op;
-                }
+                if (transicao_atual->op == simb[n_simb-1] && mt.working_tape[mt.pos + 1] == '\0') mt.working_tape[mt.pos] = '\0';
+                else mt.working_tape[mt.pos] = transicao_atual->op;
             }
 
             // Define o novo estado
@@ -538,9 +511,7 @@ int main(int argc, char *argv[]){
         qsort(trasicoes_r, n_trans*2, sizeof(transicao_q), transicaoR_compara);
         #if(DEBUG == 1)
             printf("\nTransicoes reversiveis organizadas:\n");
-            for(int i = 0; i < n_trans*2; i++){
-                transicao4_imprime(trasicoes_r+i);
-            }
+            for(int i = 0; i < n_trans*2; i++) transicao4_imprime(trasicoes_r+i);
         #endif
 
         // Realiza as operações de volta
@@ -548,9 +519,7 @@ int main(int argc, char *argv[]){
         for(int i = 0; i < 10000; i++){
             // Lê os estados do histórico de trás pra frente
             char estado_atual;
-            if (mt.hist > 0){
-                estado_atual = mt.history[--mt.hist];
-            }
+            if (mt.hist > 0) estado_atual = mt.history[--mt.hist];
             else{
                 result = VOLTOU;
                 break;
@@ -601,15 +570,8 @@ int main(int argc, char *argv[]){
 
             // Pega o valor que deve ter sido lido e escreve na fita (se for pra escrever B ele apaga).
 
-	    if (transicao_volta->input == simb[n_simb-1]
-			    && mt.working_tape[mt.pos + 1] == '\0')
-	    {
-                mt.working_tape[mt.pos] = '\0';
-	    }
-	    else
-	    {
-                mt.working_tape[mt.pos] = transicao_volta->input;
-	    }
+            if (transicao_volta->input == simb[n_simb-1] && mt.working_tape[mt.pos + 1] == '\0') mt.working_tape[mt.pos] = '\0';
+            else mt.working_tape[mt.pos] = transicao_volta->input;
         }
 
     // Escreve a situação final da fita e libera a memória. 
